@@ -1,5 +1,12 @@
 from pydantic import BaseModel, EmailStr
+from enum import Enum
 from datetime import datetime
+
+
+class RoleEnum(str, Enum):
+    admin = "admin"
+    user = "user"
+    moderator = "moderator"
 
 
 class PostBase(BaseModel):
@@ -11,6 +18,7 @@ class PostBase(BaseModel):
 class UserBase(BaseModel):
     email: EmailStr
     password: str
+    role: RoleEnum
 
 
 class CreatePost(PostBase):
@@ -28,6 +36,21 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class Payload(BaseModel):
+    id: int
+    email: EmailStr
+    role: RoleEnum
+
+    class Config:
+        orm_mode = True
+
+
+class TokenData(BaseModel):
+    id: int
+    email: EmailStr
+    role: RoleEnum
 
 
 class PostResponse(BaseModel):
