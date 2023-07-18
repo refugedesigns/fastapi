@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Boolean, Enum, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 from .schemas import RoleEnum
@@ -11,6 +12,8 @@ class Post(Base):
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     published = Column(Boolean, server_default="TRUE", nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)  # relationship
+    user = relationship("User")  # fetch the user based on the user_id
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
 
@@ -28,4 +31,5 @@ class Token(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     is_valid = Column(Boolean, server_default="TRUE", nullable=False)
     refresh_token = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)  # relationship
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))

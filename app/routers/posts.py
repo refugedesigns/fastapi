@@ -1,7 +1,8 @@
 from fastapi import HTTPException, status, Depends, APIRouter
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from ..database import get_db
+from ..utils.authorize_permissions import get_current_user
 from .. import schemas, models
 
 router = APIRouter(
@@ -11,8 +12,8 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.PostResponse])
-def get_all_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
+def get_all_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 
@@ -26,8 +27,9 @@ def get_single_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_post(post: schemas.CreatePost, db: Session = Depends(get_db)):
-    new_post = models.Post(**post.dict())  # unpack post object with key=value
+def create_post(post: schemas.CreatePost, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    print(current_user)
+    new_post = models.Post(user_id=current_user["id"], **post.dict())  # unpack post object with key=value
     db.add(new_post)
     db.commit()
     db.refresh(new_post)  # retrieve new saved post from database

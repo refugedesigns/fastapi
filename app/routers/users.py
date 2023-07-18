@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
 from .. import schemas, models
-from ..utils.cookie_auth import get_current_user, authorize_permissions
-from ..utils.hash import hash_password
+from ..utils.authorize_permissions import get_current_user, admin_routes
 
 router = APIRouter(
     prefix="/users",
@@ -12,9 +11,9 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[schemas.UserResponse], dependencies=[Depends(authorize_permissions)])
-def get_all_users(db: Session = Depends(get_db)):
-    users = db.query(models.User).all()
+@router.get("/", response_model=List[schemas.UserResponse], dependencies=[Depends(admin_routes)])
+def get_all_users(db: Session = Depends(get_db), limit: int = 10, skip: int = 0):
+    users = db.query(models.User).limit(limit).offset(skip).all()
     return users
 
 

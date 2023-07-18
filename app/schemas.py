@@ -55,6 +55,10 @@ class TokenData(BaseModel):
 
 class PostResponse(BaseModel):
     id: int
+    title: str
+    content: str
+    user_id: int
+    user: UserResponse
     created_at: datetime
 
     class Config:
