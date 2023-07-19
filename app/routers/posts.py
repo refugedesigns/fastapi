@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status, Depends, APIRouter
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from sqlalchemy import func
+from typing import List, Optional, Union
 from ..database import get_db
 from ..utils.authorize_permissions import get_current_user
 from .. import schemas, models
@@ -11,13 +12,19 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[schemas.PostResponse])
+@router.get("/", response_model=[schemas.PostOut])
 def get_all_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts
+    # posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    results = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote,
+                                                                                         models.Vote.post_id == models.Post.id,
+                                                                                         isouter=True).group_by(
+        models.Post.id).all()
+    results = list(map(lambda x: x._mapping, results))
+    print(results)
+    return results
 
 
-@router.get("/{post_id}", response_model=schemas.PostResponse)
+@router.get("/{post_id}", response_model=schemas.PostOut)
 def get_single_post(post_id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
 

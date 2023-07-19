@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
+
 from enum import Enum
 from datetime import datetime
 
@@ -63,3 +64,23 @@ class PostResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PostOut(BaseModel):
+    Post: PostResponse
+    votes: int
+
+    class Config:
+        orm_mode = True
+
+
+class Vote(BaseModel):
+    post_id: int
+    dir: int
+
+    @validator("dir")
+    def check_dir(cls, value):
+        print(type(value))
+        if value not in [0, 1]:
+            raise ValueError("Invalid value for post direction!")
+        return value
