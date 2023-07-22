@@ -12,22 +12,26 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=[schemas.PostOut])
+@router.get("/", response_model=List[schemas.PostOut])
 def get_all_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     results = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote,
                                                                                          models.Vote.post_id == models.Post.id,
                                                                                          isouter=True).group_by(
-        models.Post.id).all()
+        models.Post.id)
+    results = results.filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     results = list(map(lambda x: x._mapping, results))
-    print(results)
     return results
 
 
 @router.get("/{post_id}", response_model=schemas.PostOut)
 def get_single_post(post_id: int, db: Session = Depends(get_db)):
-    post = db.query(models.Post).filter(models.Post.id == post_id).first()
-
+    post = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote,
+                                                                                      models.Vote.post_id == models.Post.id,
+                                                                                      isouter=True).group_by(
+        models.Post.id).filter(
+        models.Post.id == post_id).first()
+    post = post._mapping if post else None
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {post_id} not found.")
     return post
