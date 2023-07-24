@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import schemas, models
 from ..utils.hash import hash_password, verify
-from ..utils.jwt import attach_access_token
+from ..utils.jwt import attach_access_token, attach_refresh_token
+import secrets
 
 router = APIRouter(
     prefix="/auth",
@@ -44,7 +45,15 @@ def login_user(response: Response, credentials: OAuth2PasswordRequestForm = Depe
 
     if not verify(credentials.password, user.password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Credentials")
-
+    existing_refresh_token = db.query(models.Token).filter(models.Token.user_id == user.id).first()
+    if not existing_refresh_token:
+        token = secrets.token_hex(40)
+        refresh_token = models.Token(user_id=user.id, refresh_token=token)
+        db.add(refresh_token)
+        db.commit()
+        db.refresh(refresh_token)
+        existing_refresh_token = refresh_token
     token_user = schemas.Payload(id=user.id, email=user.email, role=user.role)
     attach_access_token(response, token_user.dict())
+    attach_refresh_token(response, token_user.dict(), existing_refresh_token.refresh_token)
     return user

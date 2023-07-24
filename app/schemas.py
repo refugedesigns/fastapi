@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, validator
-
+from typing import Optional
 from enum import Enum
 from datetime import datetime
 
@@ -52,6 +52,7 @@ class TokenData(BaseModel):
     id: int
     email: EmailStr
     role: RoleEnum
+    refresh_token: Optional[str] = None
 
 
 class PostResponse(BaseModel):

@@ -39,7 +39,6 @@ def get_single_post(post_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_post(post: schemas.CreatePost, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    print(current_user)
     new_post = models.Post(user_id=current_user["id"], **post.dict())  # unpack post object with key=value
     db.add(new_post)
     db.commit()
